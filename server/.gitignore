@@ -1,0 +1,7 @@
+/env
+
+/server/__pycache__
+/server/app/__pycache__
+/server/app/migrations
+/server/__init__.py
+/server/app/__init__.py
