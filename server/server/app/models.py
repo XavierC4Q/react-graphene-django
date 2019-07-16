@@ -30,7 +30,7 @@ class User(AbstractUser):
     search_distance = models.IntegerField(default=5)
 
     def __str__(self):
-        return f"User: {self.id}, username: {self.username}"
+        return F"User: {self.id}, {self.username}"
 
 
 class Post(models.Model):
@@ -41,4 +41,4 @@ class Post(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Post: {self.id}, title: {self.title}"
+        return F"Post: {self.id}, {self.title}"
