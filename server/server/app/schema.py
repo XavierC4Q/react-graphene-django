@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 import graphene
 from graphene_django.types import DjangoObjectType
+from graphql_jwt.decorators import login_required
 from .models import User, Post
 
 
@@ -19,7 +20,7 @@ class Query(graphene.ObjectType):
     users = graphene.List(UserType)
     post = graphene.Field(PostType, post_id=graphene.Int())
     posts = graphene.List(PostType)
-    user_posts = graphene.List(PostType, user_id=graphene.Int())
+    user_posts = graphene.List(PostType)
 
     def resolve_user(self, info, user_id):
         return User.objects.get(id=user_id)
@@ -33,8 +34,9 @@ class Query(graphene.ObjectType):
     def resolve_posts(self, info):
         return Post.objects.all()
 
-    def resolve_user_posts(self, info, user_id):
-        return Post.objects.get(user__id=user_id, many=True)
+    @login_required
+    def resolve_user_posts(self, info):
+        return Post.objects.filter(user__id=info.context.user.id)
 
 
 class SignupMutation(graphene.Mutation):
@@ -97,10 +99,28 @@ class EditUserMutation(graphene.Mutation):
         except:
             raise Exception('Failed to edit user')
 
+class CreatePostMutation(graphene.Mutation):
+    new_post = graphene.Field(PostType)
+
+    class Arguments:
+        title = graphene.String(required=True)
+        content = graphene.String(required=True)
+
+    @login_required
+    def mutate(self, info, *args, **kwargs):
+        try:
+            user = info.context.user
+            new_post = Post(user=user, title=kwargs.get('title'), content=kwargs.get('content'))
+            new_post.save()
+            return CreatePostMutation(new_post=new_post)        
+        except:
+            raise Exception('Failed to create post')
+
 
 class Mutation(graphene.ObjectType):
     signup = SignupMutation.Field()
     edit_user = EditUserMutation.Field()
+    create_post = CreatePostMutation.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
