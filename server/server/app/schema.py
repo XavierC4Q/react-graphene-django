@@ -14,7 +14,6 @@ class PostType(DjangoObjectType):
     class Meta:
         model = Post
 
-
 class Query(graphene.ObjectType):
     user = graphene.Field(UserType, user_id=graphene.Int())
     users = graphene.List(UserType)
