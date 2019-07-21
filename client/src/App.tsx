@@ -14,11 +14,33 @@ const QUERY = gql`
   }
 `;
 
+const GET_CURRENT_USER = gql`
+  query getCurrentUser {
+    getCurrentUser @client
+  }
+`;
+
 interface IData {
   users: {
     users: IUser[];
   };
 }
+
+interface ITestCurrentData {
+  currentUser: null | IUser;
+}
+
+const TestCurrent = () => {
+  return (
+    <Query<ITestCurrentData> query={GET_CURRENT_USER}>
+      {({loading, error, data}) => {
+        if (loading) return <div>Loading current user...</div>;
+        if (error) return <div>Err on current</div>;
+        return <div>Got em</div>;
+      }}
+    </Query>
+  );
+};
 
 const App = () => {
   return (
@@ -27,8 +49,12 @@ const App = () => {
         {({loading, data, error}) => {
           if (loading) return <div>Loading stuff...</div>;
           if (error) return <div>Errors</div>;
-          console.log(data);
-          return <Login />;
+          return (
+            <React.Fragment>
+              <Login />
+              <TestCurrent />
+            </React.Fragment>
+          );
         }}
       </Query>
     </div>

@@ -1,12 +1,18 @@
 import * as React from 'react';
-import {Mutation, graphql} from 'react-apollo';
+import {Mutation} from 'react-apollo';
 import gql from 'graphql-tag';
-import {IUserLogin} from '../../types/user';
+import {IUserLogin, IUser} from '../../types/user';
 
 const MUTATION = gql`
   mutation login($username: String!, $password: String!) {
     getToken(username: $username, password: $password) {
       token
+      user {
+        id
+        username
+        email
+        account
+      }
     }
   }
 `;
@@ -14,6 +20,7 @@ const MUTATION = gql`
 interface IData {
   getToken: {
     token: string;
+    user: IUser;
   };
 }
 
@@ -32,7 +39,14 @@ const Login = () => {
 
   return (
     <div>
-      <Mutation<IData, IVariables> mutation={MUTATION} variables={{...fields}}>
+      <Mutation<IData, IVariables>
+        mutation={MUTATION}
+        variables={{...fields}}
+        update={(cache, {data}) => {
+          localStorage.setItem('token', data ? data.getToken.token : '');
+          cache.writeData({data: {currentUser: data && data.getToken.user}});
+        }}
+      >
         {(login, {loading, error, data}) => {
           const handleSubmit = (e: React.SyntheticEvent) => {
             e.preventDefault();
@@ -43,28 +57,29 @@ const Login = () => {
             <div>
               <h1>Login Here</h1>
               <form onSubmit={handleSubmit}>
-                <div>  
-                <input
-                  type="text"
-                  value={fields.username}
-                  name="username"
-                  onChange={handleInput}
-                  placeholder="Enter username"
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={fields.username}
+                    name="username"
+                    onChange={handleInput}
+                    placeholder="Enter username"
+                  />
                 </div>
-                <div>          
-                <input
-                  type="text"
-                  value={fields.password}
-                  name="password"
-                  onChange={handleInput}
-                  placeholder="Enter password"
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={fields.password}
+                    name="password"
+                    onChange={handleInput}
+                    placeholder="Enter password"
+                  />
                 </div>
                 <button type="submit">Submit</button>
               </form>
               {loading && <div>Loading...</div>}
               {data && data.getToken && <div>{JSON.stringify(data.getToken)}</div>}
+              {error && <div>Something is wrong</div>}
             </div>
           );
         }}
